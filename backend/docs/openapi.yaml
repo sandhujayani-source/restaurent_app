@@ -1,0 +1,621 @@
+﻿openapi: 3.0.3
+
+info:
+  title: Restaurant Management App API
+  version: 1.0.0
+  description: API documentation for the restaurant management backend
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+tags:
+  - name: Health
+    description: Backend health checks
+  - name: Authentication
+    description: User login and authentication
+  - name: Users
+    description: Admin staff account management
+  - name: Menu
+    description: Menu categories and menu item management
+
+paths:
+  /api/health:
+    get:
+      summary: Check backend health
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Backend is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: AHVANAM Restaurant Management API is running
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/auth/login:
+    post:
+      summary: Log in to the restaurant management app
+      description: Authenticate a user using their login credentials.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  format: password
+                  example: YourPasswordHere
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Login successful.
+                  token:
+                    type: string
+                    description: JWT authentication token
+                  user:
+                    type: object
+                    description: Authenticated user's information
+                    additionalProperties: true
+        '400':
+          description: Missing or invalid request fields
+        '401':
+          description: Invalid login credentials
+        '500':
+          description: Internal server error
+
+  /api/users:
+    get:
+      summary: Get all staff accounts
+      description: Retrieve Waiter and Kitchen Staff accounts.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Staff accounts retrieved successfully
+        '401':
+          description: Missing or invalid authentication token
+        '403':
+          description: Admin role required
+        '500':
+          description: Internal server error
+
+    post:
+      summary: Create a staff account
+      description: Create a Waiter or Kitchen Staff account. Admin authorization is required.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fullName
+                - username
+                - password
+                - roleId
+              properties:
+                fullName:
+                  type: string
+                  example: Test Waiter
+                username:
+                  type: string
+                  example: testwaiter01
+                email:
+                  type: string
+                  format: email
+                  nullable: true
+                  example: testwaiter01@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: TempPass123!
+                roleId:
+                  type: integer
+                  enum: [2, 3]
+                  description: '2 = Waiter, 3 = Kitchen Staff'
+                  example: 2
+      responses:
+        '201':
+          description: Staff account created successfully
+        '400':
+          description: Invalid staff details
+        '401':
+          description: Missing or invalid authentication token
+        '403':
+          description: Admin role required
+        '409':
+          description: Username or email already exists
+        '500':
+          description: Internal server error
+
+  /api/users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Staff user ID
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      summary: Get a staff account by ID
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Staff account retrieved successfully
+        '400':
+          description: Invalid staff ID
+        '401':
+          description: Missing or invalid authentication token
+        '403':
+          description: Admin role required
+        '404':
+          description: Staff member not found
+        '500':
+          description: Internal server error
+
+    put:
+      summary: Update a staff account
+      description: Update the staff member's name, email, and role.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fullName
+                - roleId
+              properties:
+                fullName:
+                  type: string
+                  example: Updated Waiter
+                email:
+                  type: string
+                  format: email
+                  nullable: true
+                  example: waiter@example.com
+                roleId:
+                  type: integer
+                  enum: [2, 3]
+                  example: 2
+      responses:
+        '200':
+          description: Staff account updated successfully
+        '400':
+          description: Invalid staff details
+        '401':
+          description: Missing or invalid authentication token
+        '403':
+          description: Admin role required
+        '404':
+          description: Staff member not found
+        '409':
+          description: Email already exists
+        '500':
+          description: Internal server error
+
+  /api/users/{id}/deactivate:
+    patch:
+      summary: Deactivate a staff account
+      description: Deactivate an existing Waiter or Kitchen Staff account.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Staff user ID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Staff account deactivated successfully
+        '400':
+          description: Invalid staff ID
+        '401':
+          description: Missing or invalid authentication token
+        '403':
+          description: Admin role required
+        '404':
+          description: Staff member not found
+        '409':
+          description: Staff account is already deactivated
+        '500':
+          description: Internal server error
+
+  /api/menu/categories:
+    get:
+      summary: Get all menu categories
+      description: Retrieve menu categories.
+      tags:
+        - Menu
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Menu categories retrieved successfully
+        '401':
+          description: Authentication required
+        '403':
+          description: Insufficient permissions
+        '500':
+          description: Internal server error
+
+    post:
+      summary: Create a menu category
+      description: Create a new menu category. Admin access is required.
+      tags:
+        - Menu
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: Starters
+                description:
+                  type: string
+                  nullable: true
+                  example: Appetizers and starters
+      responses:
+        '201':
+          description: Menu category created successfully
+        '400':
+          description: Invalid category details
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '409':
+          description: Category already exists
+        '500':
+          description: Internal server error
+
+  /api/menu/categories/{id}:
+    put:
+      summary: Update a menu category
+      description: Update an existing menu category. Admin access is required.
+      tags:
+        - Menu
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Menu category ID
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: Main Course
+                description:
+                  type: string
+                  nullable: true
+                  example: Main course dishes
+                isActive:
+                  type: boolean
+                  default: true
+                  example: true
+      responses:
+        '200':
+          description: Menu category updated successfully
+        '400':
+          description: Invalid category details
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '404':
+          description: Category not found
+        '409':
+          description: Category name already exists
+        '500':
+          description: Internal server error
+
+  /api/menu/items:
+    get:
+      summary: Get all menu items
+      description: Retrieve menu items and their category names.
+      tags:
+        - Menu
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Menu items retrieved successfully
+        '401':
+          description: Authentication required
+        '403':
+          description: Insufficient permissions
+        '500':
+          description: Internal server error
+
+    post:
+      summary: Create a menu item
+      description: Create a menu item. Admin access is required.
+      tags:
+        - Menu
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - categoryId
+                - name
+                - price
+              properties:
+                categoryId:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: Paneer Tikka
+                description:
+                  type: string
+                  nullable: true
+                  example: Grilled paneer with spices
+                price:
+                  type: number
+                  format: double
+                  minimum: 0
+                  example: 220
+      responses:
+        '201':
+          description: Menu item created successfully
+        '400':
+          description: Invalid menu item details
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '404':
+          description: Menu category not found
+        '500':
+          description: Internal server error
+
+  /api/menu/items/{id}:
+    get:
+      summary: Get a menu item by ID
+      tags:
+        - Menu
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Menu item ID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Menu item retrieved successfully
+        '400':
+          description: Invalid menu item ID
+        '401':
+          description: Authentication required
+        '403':
+          description: Insufficient permissions
+        '404':
+          description: Menu item not found
+        '500':
+          description: Internal server error
+
+    put:
+      summary: Update a menu item
+      description: Update a menu item. Admin access is required.
+      tags:
+        - Menu
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Menu item ID
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - categoryId
+                - name
+                - price
+              properties:
+                categoryId:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: Paneer Tikka
+                description:
+                  type: string
+                  nullable: true
+                  example: Updated description
+                price:
+                  type: number
+                  format: double
+                  minimum: 0
+                  example: 240
+      responses:
+        '200':
+          description: Menu item updated successfully
+        '400':
+          description: Invalid menu item details
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '404':
+          description: Menu item not found
+        '500':
+          description: Internal server error
+
+    delete:
+      summary: Delete a menu item
+      description: Permanently delete a menu item. Admin access is required.
+      tags:
+        - Menu
+      operationId: deleteMenuItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Menu item ID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Menu item deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Menu item deleted successfully.
+        '400':
+          description: Invalid menu item ID
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '404':
+          description: Menu item not found
+        '500':
+          description: Internal server error
+
+  /api/menu/items/{id}/availability:
+    patch:
+      summary: Update menu item availability
+      description: Enable or disable a menu item. Admin access is required.
+      tags:
+        - Menu
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Menu item ID
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - isAvailable
+              properties:
+                isAvailable:
+                  type: boolean
+                  example: false
+      responses:
+        '200':
+          description: Menu item availability updated successfully
+        '400':
+          description: Invalid availability value
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '404':
+          description: Menu item not found
+        '500':
+          description: Internal server error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter your JWT access token.

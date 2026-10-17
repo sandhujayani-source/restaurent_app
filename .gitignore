@@ -1,0 +1,17 @@
+﻿# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Logs and test output
+logs/
+coverage/
+
+# Editor and OS files
+.vscode/
+.DS_Store
+Thumbs.db
