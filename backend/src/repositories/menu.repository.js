@@ -93,17 +93,24 @@ const MenuRepository = {
     },
 
     // 7. Update a menu item
-    async updateItem(id, { categoryId, name, description, price }) {
-        const [result] = await pool.execute(
-            `UPDATE menu_items
-             SET category_id = ?, name = ?, description = ?, price = ?
-             WHERE id = ?`,
-            [categoryId, name, description || null, price, id]
-        );
+   async updateItem(id, { categoryId, name, description, price }) {
+    // Check whether the item exists before updating.
+    const existingItem = await this.getItemById(id);
 
-        return result.affectedRows;
-    },
+    if (!existingItem) {
+        return 0;
+    }
 
+    const [result] = await pool.execute(
+        `UPDATE menu_items
+         SET category_id = ?, name = ?, description = ?, price = ?
+         WHERE id = ?`,
+        [categoryId, name, description || null, price, id]
+    );
+
+    // The item exists, so a no-change update is still successful.
+    return result.affectedRows > 0 ? result.affectedRows : 1;
+},
     // 8. Update item availability
     async updateAvailability(id, isAvailable) {
         const [result] = await pool.execute(
