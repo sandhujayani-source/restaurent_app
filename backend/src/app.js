@@ -7,6 +7,7 @@ const swaggerDocument = require('./config/swagger');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const menuRoutes = require('./routes/menu.routes');
+const tableRoutes = require('./routes/table.routes');
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use(
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/tables', tableRoutes);
 
 // ==================================================
 // 404 HANDLER

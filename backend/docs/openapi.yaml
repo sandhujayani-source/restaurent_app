@@ -6,8 +6,8 @@ info:
   description: API documentation for the restaurant management backend
 
 servers:
-  - url: http://localhost:5000
-    description: Local development server
+  - url: https://restaurent-app-3ms8.onrender.com
+    description: Production server
 
 tags:
   - name: Health
@@ -18,6 +18,8 @@ tags:
     description: Admin staff account management
   - name: Menu
     description: Menu categories and menu item management
+  - name: Tables
+    description: Restaurant table management
 
 paths:
   /api/health:
@@ -609,6 +611,172 @@ paths:
           description: Admin access required
         '404':
           description: Menu item not found
+        '500':
+          description: Internal server error
+
+  /api/tables:
+    get:
+      summary: List active restaurant tables
+      description: Admin, Waiter, and Kitchen Staff access is allowed.
+      tags:
+        - Tables
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [available, occupied, reserved, maintenance]
+      responses:
+        '200':
+          description: Tables retrieved successfully
+        '400':
+          description: Invalid table status filter
+        '401':
+          description: Authentication required
+        '403':
+          description: Insufficient permissions
+        '500':
+          description: Internal server error
+
+    post:
+      summary: Create a restaurant table
+      description: Admin access is required.
+      tags:
+        - Tables
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tableNumber
+              properties:
+                tableNumber:
+                  type: string
+                  maxLength: 30
+                  example: T1
+                capacity:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
+                  default: 1
+                  example: 4
+                status:
+                  type: string
+                  enum: [available, occupied, reserved, maintenance]
+                  default: available
+      responses:
+        '201':
+          description: Table created successfully
+        '400':
+          description: Invalid table details
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '409':
+          description: Table number already exists
+        '500':
+          description: Internal server error
+
+  /api/tables/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Restaurant table ID
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      summary: Get an active table by ID
+      description: Admin, Waiter, and Kitchen Staff access is allowed.
+      tags:
+        - Tables
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Table retrieved successfully
+        '400':
+          description: Invalid table ID
+        '401':
+          description: Authentication required
+        '403':
+          description: Insufficient permissions
+        '404':
+          description: Table not found
+        '500':
+          description: Internal server error
+
+    patch:
+      summary: Update a restaurant table
+      description: Admin access is required.
+      tags:
+        - Tables
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                tableNumber:
+                  type: string
+                  maxLength: 30
+                capacity:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
+                status:
+                  type: string
+                  enum: [available, occupied, reserved, maintenance]
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: Table updated successfully
+        '400':
+          description: Invalid table details
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '404':
+          description: Table not found
+        '409':
+          description: Table number already exists
+        '500':
+          description: Internal server error
+
+    delete:
+      summary: Deactivate a restaurant table
+      description: Soft-delete a table so historical order references remain valid. Admin access is required.
+      tags:
+        - Tables
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Table deactivated successfully
+        '400':
+          description: Invalid table ID
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '404':
+          description: Table not found
         '500':
           description: Internal server error
 

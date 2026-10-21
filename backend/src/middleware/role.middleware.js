@@ -13,7 +13,13 @@
             req.user.role_name ||
             req.user.roleName;
 
-        if (!userRole || !allowedRoles.includes(userRole)) {
+        const normalizedUserRole =
+            typeof userRole === 'string' ? userRole.toLowerCase() : '';
+
+        if (
+            !normalizedUserRole ||
+            !allowedRoles.some(role => role.toLowerCase() === normalizedUserRole)
+        ) {
             return res.status(403).json({
                 success: false,
                 message: 'You do not have permission to perform this action.'

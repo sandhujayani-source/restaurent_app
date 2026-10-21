@@ -16,10 +16,18 @@ async function ensureAdminAccount() {
         return;
     }
 
-    await pool.execute(
-        'INSERT IGNORE INTO roles (role_name, description) VALUES (?, ?)',
-        ['admin', 'Restaurant administrator']
-    );
+    const rolesToEnsure = [
+        ['admin', 'Restaurant administrator'],
+        ['Waiter', 'Restaurant service staff'],
+        ['Kitchen Staff', 'Restaurant kitchen staff']
+    ];
+
+    for (const [roleName, description] of rolesToEnsure) {
+        await pool.execute(
+            'INSERT IGNORE INTO roles (role_name, description) VALUES (?, ?)',
+            [roleName, description]
+        );
+    }
 
     const [roles] = await pool.execute(
         'SELECT id FROM roles WHERE role_name = ? LIMIT 1',
