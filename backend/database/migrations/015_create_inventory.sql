@@ -1,2 +1,14 @@
-﻿-- TODO: Add the database migration or seed SQL for this module.
+﻿CREATE TABLE IF NOT EXISTS inventory (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	supplier_id INT UNSIGNED NULL,
+	item_name VARCHAR(150) NOT NULL,
+	unit VARCHAR(30) NOT NULL,
+	quantity DECIMAL(12, 3) NOT NULL DEFAULT 0.000,
+	reorder_level DECIMAL(12, 3) NOT NULL DEFAULT 0.000,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	KEY idx_inventory_supplier_id (supplier_id),
+	CONSTRAINT fk_inventory_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id)
+) ENGINE=InnoDB;
 

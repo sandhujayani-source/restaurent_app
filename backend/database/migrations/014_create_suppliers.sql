@@ -1,2 +1,14 @@
-﻿-- TODO: Add the database migration or seed SQL for this module.
+﻿CREATE TABLE IF NOT EXISTS suppliers (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	name VARCHAR(150) NOT NULL,
+	contact_person VARCHAR(150) NULL,
+	phone VARCHAR(30) NULL,
+	email VARCHAR(255) NULL,
+	address TEXT NULL,
+	is_active TINYINT(1) NOT NULL DEFAULT 1,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	KEY idx_suppliers_name (name)
+) ENGINE=InnoDB;
 

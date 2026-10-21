@@ -1,2 +1,9 @@
-﻿-- TODO: Add the database migration or seed SQL for this module.
+﻿CREATE TABLE IF NOT EXISTS roles (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	role_name VARCHAR(50) NOT NULL,
+	description VARCHAR(255) NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	UNIQUE KEY uq_roles_role_name (role_name)
+) ENGINE=InnoDB;
 

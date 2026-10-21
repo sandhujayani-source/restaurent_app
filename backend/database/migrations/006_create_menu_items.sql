@@ -1,2 +1,15 @@
-﻿-- TODO: Add the database migration or seed SQL for this module.
+﻿CREATE TABLE IF NOT EXISTS menu_items (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	category_id INT UNSIGNED NOT NULL,
+	name VARCHAR(150) NOT NULL,
+	description TEXT NULL,
+	price DECIMAL(10, 2) NOT NULL,
+	is_available TINYINT(1) NOT NULL DEFAULT 1,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	KEY idx_menu_items_category_id (category_id),
+	CONSTRAINT fk_menu_items_category FOREIGN KEY (category_id)
+		REFERENCES menu_categories (id)
+) ENGINE=InnoDB;
 

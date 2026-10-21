@@ -1,2 +1,12 @@
-﻿-- TODO: Add the database migration or seed SQL for this module.
+﻿CREATE TABLE IF NOT EXISTS customers (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	full_name VARCHAR(150) NOT NULL,
+	phone VARCHAR(30) NULL,
+	email VARCHAR(255) NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	KEY idx_customers_phone (phone),
+	KEY idx_customers_email (email)
+) ENGINE=InnoDB;
 

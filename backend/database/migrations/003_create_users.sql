@@ -1,2 +1,17 @@
-﻿-- TODO: Add the database migration or seed SQL for this module.
+﻿CREATE TABLE IF NOT EXISTS users (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	full_name VARCHAR(150) NOT NULL,
+	username VARCHAR(50) NOT NULL,
+	email VARCHAR(255) NOT NULL,
+	password_hash VARCHAR(255) NOT NULL,
+	role_id INT UNSIGNED NOT NULL,
+	is_active TINYINT(1) NOT NULL DEFAULT 1,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	UNIQUE KEY uq_users_username (username),
+	UNIQUE KEY uq_users_email (email),
+	KEY idx_users_role_id (role_id),
+	CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles (id)
+) ENGINE=InnoDB;
 

@@ -1,2 +1,12 @@
-﻿-- TODO: Add the database migration or seed SQL for this module.
+﻿CREATE TABLE IF NOT EXISTS restaurant_tables (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	table_number VARCHAR(30) NOT NULL,
+	capacity SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+	status VARCHAR(30) NOT NULL DEFAULT 'available',
+	is_active TINYINT(1) NOT NULL DEFAULT 1,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	UNIQUE KEY uq_restaurant_tables_table_number (table_number)
+) ENGINE=InnoDB;
 

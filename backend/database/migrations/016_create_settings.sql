@@ -1,2 +1,9 @@
-﻿-- TODO: Add the database migration or seed SQL for this module.
+﻿CREATE TABLE IF NOT EXISTS settings (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	setting_key VARCHAR(100) NOT NULL,
+	setting_value TEXT NULL,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	UNIQUE KEY uq_settings_setting_key (setting_key)
+) ENGINE=InnoDB;
 
