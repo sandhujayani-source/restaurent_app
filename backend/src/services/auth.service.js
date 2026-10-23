@@ -2,8 +2,10 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../config/env');
 
 const UserRepository = require('../repositories/user.repository');
+const TokenRepository = require('../repositories/token.repository');
 
 const AuthService = {
     async login(username, password) {
@@ -48,18 +50,7 @@ const AuthService = {
         }
 
         // Ensure the JWT secret is configured
-        const jwtSecret = process.env.JWT_SECRET;
-
-        if (
-            !jwtSecret ||
-            jwtSecret === 'replace_with_a_long_random_secret'
-        ) {
-            const error = new Error(
-                'JWT_SECRET must be configured securely in .env.'
-            );
-            error.statusCode = 500;
-            throw error;
-        }
+        const jwtSecret = getJwtSecret();
 
         // Retrieve permissions for the user's role
         const permissions =
@@ -90,6 +81,22 @@ const AuthService = {
                 permissions
             }
         };
+    },
+
+    async logout(token, expiresAt) {
+        if (
+            typeof token !== 'string' ||
+            !Number.isInteger(expiresAt) ||
+            expiresAt <= Math.floor(Date.now() / 1000)
+        ) {
+            const error = new Error('A valid expiring authentication token is required.');
+            error.statusCode = 401;
+            throw error;
+        }
+
+        await TokenRepository.revoke(token, new Date(expiresAt * 1000));
+
+        return { message: 'Logged out successfully.' };
     }
 };
 

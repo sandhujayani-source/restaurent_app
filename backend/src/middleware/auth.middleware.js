@@ -1,6 +1,8 @@
 ﻿const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../config/env');
+const TokenRepository = require('../repositories/token.repository');
 
-function authenticateToken(req, res, next) {
+async function authenticateToken(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -11,21 +13,38 @@ function authenticateToken(req, res, next) {
     }
 
     const token = authHeader.split(' ')[1];
+    let decoded;
+    let jwtSecret;
 
     try {
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_SECRET
-        );
+        jwtSecret = getJwtSecret();
+    } catch (error) {
+        return next(error);
+    }
 
-        req.user = decoded;
+    try {
+        decoded = jwt.verify(token, jwtSecret);
 
-        next();
     } catch (error) {
         return res.status(401).json({
             success: false,
             message: 'Invalid or expired authentication token.'
         });
+    }
+
+    try {
+        if (await TokenRepository.isRevoked(token)) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid or expired authentication token.'
+            });
+        }
+
+        req.user = decoded;
+        req.authToken = token;
+        return next();
+    } catch (error) {
+        return next(error);
     }
 }
 

@@ -16,6 +16,19 @@ const AuthController = {
         } catch (error) {
             next(error);
         }
+    },
+
+    async logout(req, res, next) {
+        try {
+            const result = await AuthService.logout(req.authToken, req.user.exp);
+
+            return res.status(200).json({
+                success: true,
+                message: result.message
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 };
 
