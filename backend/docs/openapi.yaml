@@ -20,6 +20,12 @@ tags:
     description: Menu categories and menu item management
   - name: Tables
     description: Restaurant table management
+  - name: Orders
+    description: Restaurant order management
+  - name: Kitchen
+    description: Kitchen order tickets and preparation status
+  - name: Settings
+    description: Restaurant and billing configuration
 
 paths:
   /api/health:
@@ -75,6 +81,7 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [success, message, data]
                 properties:
                   success:
                     type: boolean
@@ -82,17 +89,37 @@ paths:
                   message:
                     type: string
                     example: Login successful.
-                  token:
-                    type: string
-                    description: JWT authentication token
-                  user:
+                  data:
                     type: object
-                    description: Authenticated user's information
-                    additionalProperties: true
+                    required: [token, user]
+                    properties:
+                      token:
+                        type: string
+                        description: JWT authentication token
+                      user:
+                        type: object
+                        description: Authenticated user's information
+                        additionalProperties: true
         '400':
           description: Missing or invalid request fields
         '401':
           description: Invalid login credentials
+        '500':
+          description: Internal server error
+
+  /api/auth/logout:
+    post:
+      summary: Log out the current user
+      description: Revoke the current bearer token. The client should also discard the token.
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+        '401':
+          description: Missing, invalid, or expired authentication token
         '500':
           description: Internal server error
 
@@ -777,6 +804,345 @@ paths:
           description: Admin access required
         '404':
           description: Table not found
+        '500':
+          description: Internal server error
+
+  /api/orders:
+    get:
+      summary: List orders
+      description: Waiters receive only their own orders. Admin and Kitchen Staff can view all orders.
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, preparing, ready, completed, cancelled]
+        - name: tableId
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Orders retrieved successfully
+        '400':
+          description: Invalid order filter
+        '401':
+          description: Authentication required
+        '403':
+          description: Insufficient permissions
+        '500':
+          description: Internal server error
+
+    post:
+      summary: Create and submit an order
+      description: Prices are loaded from the menu on the server. A pending kitchen ticket is created atomically with the order.
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Reuse the same key to safely retry an identical order request.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              additionalProperties: false
+              properties:
+                tableId:
+                  type: integer
+                  minimum: 1
+                  nullable: true
+                notes:
+                  type: string
+                  maxLength: 2000
+                items:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    type: object
+                    required: [menuItemId, quantity]
+                    additionalProperties: false
+                    properties:
+                      menuItemId:
+                        type: integer
+                        minimum: 1
+                      quantity:
+                        type: integer
+                        minimum: 1
+                        maximum: 999
+                      notes:
+                        type: string
+                        maxLength: 1000
+      responses:
+        '201':
+          description: Order and kitchen ticket created
+        '200':
+          description: Existing order returned for a repeated Idempotency-Key
+        '400':
+          description: Invalid order payload or menu item reference
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin or Waiter role required
+        '404':
+          description: Active table not found
+        '409':
+          description: Table unavailable, item unavailable, or idempotency key conflict
+        '500':
+          description: Internal server error
+
+  /api/orders/{id}:
+    get:
+      summary: Get an order with its items and kitchen tickets
+      description: Waiters can retrieve only their own orders.
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Order retrieved successfully
+        '400':
+          description: Invalid order ID
+        '401':
+          description: Authentication required
+        '403':
+          description: Insufficient permissions
+        '404':
+          description: Order not found
+        '500':
+          description: Internal server error
+
+  /api/orders/{id}/status:
+    patch:
+      summary: Complete or cancel an order
+      description: A ready order can be completed. Pending orders can be cancelled by their waiter or an admin; admins may also cancel preparing orders.
+      tags:
+        - Orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              additionalProperties: false
+              properties:
+                status:
+                  type: string
+                  enum: [completed, cancelled]
+      responses:
+        '200':
+          description: Order status updated successfully
+        '400':
+          description: Invalid order ID or status
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin or Waiter role required
+        '404':
+          description: Order not found
+        '409':
+          description: Invalid order status transition
+        '500':
+          description: Internal server error
+
+  /api/kitchen:
+    get:
+      summary: List kitchen tickets
+      description: Admin and Kitchen Staff can retrieve tickets and their order items.
+      tags:
+        - Kitchen
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, preparing, ready]
+      responses:
+        '200':
+          description: Kitchen tickets retrieved successfully
+        '400':
+          description: Invalid ticket status filter
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin or Kitchen Staff role required
+        '500':
+          description: Internal server error
+
+  /api/kitchen/{id}:
+    get:
+      summary: Get a kitchen ticket with its items
+      tags:
+        - Kitchen
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Kitchen ticket retrieved successfully
+        '400':
+          description: Invalid ticket ID
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin or Kitchen Staff role required
+        '404':
+          description: Kitchen ticket not found
+        '500':
+          description: Internal server error
+
+  /api/kitchen/{id}/status:
+    patch:
+      summary: Advance a kitchen ticket
+      description: Only pending → preparing → ready transitions are allowed. The associated order status is updated atomically.
+      tags:
+        - Kitchen
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              additionalProperties: false
+              properties:
+                status:
+                  type: string
+                  enum: [preparing, ready]
+      responses:
+        '200':
+          description: Kitchen ticket and order status updated successfully
+        '400':
+          description: Invalid ticket ID or requested status
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin or Kitchen Staff role required
+        '404':
+          description: Kitchen ticket not found
+        '409':
+          description: Invalid kitchen status transition
+        '500':
+          description: Internal server error
+
+  /api/settings:
+    get:
+      summary: List restaurant settings
+      description: Authenticated restaurant roles can read configured settings.
+      tags:
+        - Settings
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Settings retrieved successfully
+        '401':
+          description: Authentication required
+        '403':
+          description: Insufficient permissions
+        '500':
+          description: Internal server error
+
+  /api/settings/{key}:
+    put:
+      summary: Create or update a restaurant setting
+      description: Admin access is required. Tax rate, payment methods, and currency are supported.
+      tags:
+        - Settings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [tax_rate, payment_methods, currency]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              additionalProperties: false
+              properties:
+                value:
+                  oneOf:
+                    - type: number
+                      minimum: 0
+                      maximum: 100
+                      description: Tax percentage for tax_rate.
+                    - type: array
+                      minItems: 1
+                      items:
+                        type: string
+                      description: Payment identifiers; cash must be included.
+                    - type: string
+                      pattern: '^[A-Z]{3}$'
+                      description: ISO-style currency code.
+      responses:
+        '200':
+          description: Setting updated successfully
+        '400':
+          description: Invalid setting value
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin access required
+        '404':
+          description: Unsupported setting key
         '500':
           description: Internal server error
 
