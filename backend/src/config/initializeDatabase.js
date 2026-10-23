@@ -3,6 +3,7 @@ const path = require('node:path');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
 const pool = require('./database');
+const seedWorkbenchData = require('./seedWorkbenchData');
 
 async function ensureAdminAccount() {
     const username = process.env.ADMIN_USERNAME || 'admin';
@@ -111,6 +112,7 @@ async function initializeDatabase() {
     }
 
     await ensureAdminAccount();
+    await seedWorkbenchData();
     console.log(`Database ready: ${databaseName}`);
 }
 
