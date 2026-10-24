@@ -1894,7 +1894,6 @@ paths:
           description: Billing settings are not configured
         '500':
           description: Internal server error
-
 components:
   securitySchemes:
     BearerAuth:
