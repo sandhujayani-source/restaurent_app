@@ -2,12 +2,14 @@ require('dotenv').config();
 
 const app = require('./app');
 const pool = require('./config/database');
+const { validateEnvironment } = require('./config/env');
 const initializeDatabase = require('./config/initializeDatabase');
 
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
     try {
+        validateEnvironment();
         await initializeDatabase();
 
         app.listen(PORT, () => {

@@ -1,6 +1,18 @@
 ﻿const pool = require('../config/database');
 
 const UserRepository = {
+    async findStaffRoleById(roleId) {
+        const [rows] = await pool.execute(
+            `SELECT id, role_name
+             FROM roles
+             WHERE id = ?
+               AND LOWER(role_name) IN ('waiter', 'kitchen staff')
+             LIMIT 1`,
+            [roleId]
+        );
+        return rows[0] || null;
+    },
+
     // Find a user by username
     async findByUsername(username) {
         const sql = `

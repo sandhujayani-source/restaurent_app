@@ -13,11 +13,19 @@ const UserService = {
             !username.trim() ||
             typeof password !== 'string' ||
             password.length < 8 ||
-            ![2, 3].includes(Number(roleId))
+            !Number.isInteger(Number(roleId)) ||
+            Number(roleId) < 1
         ) {
             const error = new Error(
-                'Provide a full name, username, password of at least 8 characters, and a valid staff role.'
+                'Provide a full name, username, password of at least 8 characters, and a staff role ID.'
             );
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const staffRole = await UserRepository.findStaffRoleById(Number(roleId));
+        if (!staffRole) {
+            const error = new Error('Role must be Waiter or Kitchen Staff.');
             error.statusCode = 400;
             throw error;
         }
@@ -47,7 +55,7 @@ const UserService = {
             username: cleanUsername,
             email: cleanEmail,
             passwordHash,
-            roleId: Number(roleId)
+            roleId: Number(staffRole.id)
         });
 
         return {
@@ -55,7 +63,7 @@ const UserService = {
             fullName: fullName.trim(),
             username: cleanUsername,
             email: cleanEmail,
-            role: Number(roleId) === 2 ? 'Waiter' : 'Kitchen Staff'
+            role: staffRole.role_name
         };
     },
 
@@ -95,10 +103,18 @@ const UserService = {
             staffId <= 0 ||
             typeof fullName !== 'string' ||
             !fullName.trim() ||
-            ![2, 3].includes(Number(roleId)) ||
+            !Number.isInteger(Number(roleId)) ||
+            Number(roleId) < 1 ||
             (email != null && typeof email !== 'string')
         ) {
             const error = new Error('Please provide valid staff details.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const staffRole = await UserRepository.findStaffRoleById(Number(roleId));
+        if (!staffRole) {
+            const error = new Error('Role must be Waiter or Kitchen Staff.');
             error.statusCode = 400;
             throw error;
         }
@@ -124,7 +140,7 @@ const UserService = {
         const updated = await UserRepository.updateStaff(staffId, {
             fullName: fullName.trim(),
             email: cleanEmail,
-            roleId: Number(roleId)
+            roleId: Number(staffRole.id)
         });
 
         if (!updated) {

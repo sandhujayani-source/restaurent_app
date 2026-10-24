@@ -318,13 +318,6 @@ const MenuController = {
                 });
             }
 
-            if (typeof MenuRepository.deleteItem !== 'function') {
-                return res.status(501).json({
-                    success: false,
-                    message: 'Menu item deletion is not implemented in the repository yet.'
-                });
-            }
-
             const affected = await MenuRepository.deleteItem(id);
 
             if (!affected) {

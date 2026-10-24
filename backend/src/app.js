@@ -8,6 +8,15 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const menuRoutes = require('./routes/menu.routes');
 const tableRoutes = require('./routes/table.routes');
+const orderRoutes = require('./routes/order.routes');
+const kitchenRoutes = require('./routes/kitchen.routes');
+const settingsRoutes = require('./routes/settings.routes');
+const paymentRoutes = require('./routes/payment.routes');
+const customerRoutes = require('./routes/customer.routes');
+const supplierRoutes = require('./routes/supplier.routes');
+const inventoryRoutes = require('./routes/inventory.routes');
+const roleRoutes = require('./routes/role.routes');
+const reportRoutes = require('./routes/report.routes');
 
 const app = express();
 
@@ -37,16 +46,6 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api-docs.json', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-
-    // Temporary diagnostic: check whether DELETE exists
-    // in the Swagger document loaded by this application.
-    console.log(
-        'DELETE in live Swagger document:',
-        Boolean(
-            swaggerDocument.paths['/api/menu/items/{id}']?.delete
-        )
-    );
-
     res.status(200).json(swaggerDocument);
 });
 
@@ -76,6 +75,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tables', tableRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/kitchen', kitchenRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/billing', require('./routes/billing.routes'));
+app.use('/api/payments', paymentRoutes);
 
 // ==================================================
 // 404 HANDLER
